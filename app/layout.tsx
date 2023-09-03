@@ -21,7 +21,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
         <body className={inter.className}>
-          <ThemeProvider attribute='class' forcedTheme='dark' enableSystem>
+          <ThemeProvider attribute='class' defaultTheme='system' enableSystem>
             {children}
           </ThemeProvider>
         </body>
