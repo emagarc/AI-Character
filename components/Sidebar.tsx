@@ -45,7 +45,11 @@ const Sidebar = () => {
                         onClick={() => onNavigate(route.href, route.pro)}
                         key={route.href}
                         className={cn(
-                            "text-muted-foreground text-xs group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-primary hover:bg-primary/10 rounded-lg transition", pathname === route.href && "bg-primary/10 text-primary")}
+                            "text-muted-foreground text-xs group flex p-3 w-full", 
+                            "justify-start font-medium cursor-pointer hover:text-primary",
+                            "hover:bg-primary/10 rounded-lg transition", 
+                            pathname === route.href && "bg-primary/10 text-primary"
+                        )}
                     >
                         <div className="flex flex-col gap-y-2 items-center flex-1">
                             <route.icon className="h-5 w-5"/>
