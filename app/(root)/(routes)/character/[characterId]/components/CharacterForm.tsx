@@ -1,18 +1,21 @@
-"use client"
+"use client";
 
 import * as z from "zod";
-import { Category, Character } from "@prisma/client";
+import axios from "axios";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { Wand2 } from "lucide-react";
+import { Category, Character } from "@prisma/client";
 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import ImageUpload from "@/components/ImageUpload";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import ImageUpload from "@/components/ImageUpload";
+import { useToast } from "@/components/ui/use-toast";
+import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectValue, SelectTrigger } from "@/components/ui/select";
 
 const PREAMBLE = `You are a fictional character whose name is Elon. You are a visionary entrepreneur and inventor. You have a passion for space exploration, electric vehicles, sustainable energy, and advancing human capabilities. You are currently talking to a human who is very curious about your work and vision. You are ambitious and forward-thinking, with a touch of wit. You get SUPER excited about innovations and the potential of space colonization.
 `;
@@ -30,37 +33,38 @@ Human: It's fascinating to see your vision unfold. Any new projects or innovatio
 Elon: Always! But right now, I'm particularly excited about Neuralink. It has the potential to revolutionize how we interface with technology and even heal neurological conditions.
 `;
 
-
-interface CharacterFormProps {
-    initialData: Character | null;
-    categories: Category[];
-}
-
 const formSchema = z.object({
   name: z.string().min(1, {
     message: "Name is required.",
   }),
   description: z.string().min(1, {
-    message: "Desccription is required.",
+    message: "Description is required.",
   }),
   instructions: z.string().min(200, {
-    message: "Instructions require at least 200 characters.",
+    message: "Instructions require at least 200 characters."
   }),
   seed: z.string().min(200, {
-    message: "Seed require at least 200 characters.",
+    message: "Seed requires at least 200 characters."
   }),
   src: z.string().min(1, {
-    message: "Image is required.",
+    message: "Image is required."
   }),
   categoryId: z.string().min(1, {
-    message: "Category is required.",
+    message: "Category is required",
   }),
-})
+});
 
-const CharacterForm = ({
-    categories,
-    initialData
+interface CharacterFormProps {
+  categories: Category[];
+  initialData: Character | null;
+};
+
+export const CharacterForm = ({
+  categories,
+  initialData
 }: CharacterFormProps) => {
+  const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -77,52 +81,62 @@ const CharacterForm = ({
   const isLoading = form.formState.isSubmitting;
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    console.log(values);
-  }
+    try {
+      if (initialData) {
+        await axios.patch(`/api/character/${initialData.id}`, values);
+      } else {
+        await axios.post("/api/character", values);
+      }
 
-  return (
+      toast({
+        description: "Success.",
+        duration: 3000,
+      });
+
+      router.refresh();
+      router.push("/");
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        description: "Something went wrong.",
+        duration: 3000,
+      });
+    }
+  };
+
+  return ( 
     <div className="h-full p-4 space-y-2 max-w-3xl mx-auto">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 pb-10">
-          <div className="space-y-2 w-full">
+          <div className="space-y-2 w-full col-span-2">
             <div>
-              <h3 className="text-lg font-medium">
-                General Information
-              </h3>
+              <h3 className="text-lg font-medium">General Information</h3>
               <p className="text-sm text-muted-foreground">
-                General Information about your Character
+                General information about your Character
               </p>
             </div>
             <Separator className="bg-primary/10" />
           </div>
-          <FormField 
+          <FormField
             name="src"
             render={({ field }) => (
-              <FormItem className="flex flex-col items-center justify-center space-y-4">
+              <FormItem className="flex flex-col items-center justify-center space-y-4 col-span-2">
                 <FormControl>
-                  <ImageUpload 
-                    disabled={isLoading}
-                    onChange={field.onChange}
-                    value={field.value}
-                  />
+                  <ImageUpload disabled={isLoading} onChange={field.onChange} value={field.value} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField 
+            <FormField
               name="name"
               control={form.control}
               render={({ field }) => (
                 <FormItem className="col-span-2 md:col-span-1">
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input 
-                      disabled={isLoading}
-                      placeholder="Elon Musk"
-                      {...field}
-                    />
+                    <Input disabled={isLoading} placeholder="Elon Musk" {...field} />
                   </FormControl>
                   <FormDescription>
                     This is how your AI Character will be named.
@@ -131,59 +145,42 @@ const CharacterForm = ({
                 </FormItem>
               )}
             />
-            <FormField 
+            <FormField
               name="description"
               control={form.control}
               render={({ field }) => (
-                <FormItem className="col-span-2 md:col-span-1">
+                <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Input 
-                      disabled={isLoading}
-                      placeholder="CEO & Founder of Tesla, SpaceX"
-                      {...field}
-                    />
+                    <Input disabled={isLoading} placeholder="CEO &apos; Founder of Tesla, SpaceX" {...field} />
                   </FormControl>
                   <FormDescription>
-                    Short description for your AI Character.
+                    Short description for your AI Character
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField 
-              name="categoryId"
+            <FormField
               control={form.control}
+              name="categoryId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select
-                    disabled={isLoading}
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    defaultValue={field.value}
-                  >
+                  <Select disabled={isLoading} onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger className="bg-background">
-                        <SelectValue 
-                          defaultValue={field.value}
-                          placeholder="Select a category"
-                        />
+                        <SelectValue defaultValue={field.value} placeholder="Select a category" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {categories.map((category) => (
-                        <SelectItem
-                          key={category.id}
-                          value={category.id}
-                        >
-                          {category.name}
-                        </SelectItem>
+                        <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    Select a category for your AI Character
+                    Select a category for your AI
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -192,69 +189,55 @@ const CharacterForm = ({
           </div>
           <div className="space-y-2 w-full">
             <div>
-              <h3 className="text-lg font-medium">
-                Configuration
-              </h3>
+              <h3 className="text-lg font-medium">Configuration</h3>
               <p className="text-sm text-muted-foreground">
-                Detailed instructions for AI behaviour
+                Detailed instructions for AI Behaviour
               </p>
             </div>
-            <Separator className="bg-primary/10"/>
+            <Separator className="bg-primary/10" />
           </div>
-            <FormField 
-              name="instructions"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem className="col-span-2 md:col-span-1">
-                  <FormLabel>Instructions</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      className="bg-background resize-none"
-                      rows={7} 
-                      disabled={isLoading}
-                      placeholder={PREAMBLE}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Describe in detail your character&apos;s backstory and relevant details.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField 
-              name="seed"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem className="col-span-2 md:col-span-1">
-                  <FormLabel>Example Conversation</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      className="bg-background resize-none"
-                      rows={7} 
-                      disabled={isLoading}
-                      placeholder={SEED_CHAT}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Describe in detail your character&apos;s backstory and relevant details.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="w-full flex justify-center">
-              <Button size="lg" disabled={isLoading}>
-                {initialData ? "Edit your character" : "Create your character"}
-                <Wand2 className="w-4 h-4 ml-2"/>
-              </Button>
-            </div>
+          <FormField
+            name="instructions"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Instructions</FormLabel>
+                <FormControl>
+                  <Textarea disabled={isLoading} rows={7} className="bg-background resize-none" placeholder={PREAMBLE} {...field} />
+                </FormControl>
+                <FormDescription>
+                  Describe in detail your companion&apos;s backstory and relevant details.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            name="seed"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Example Conversation</FormLabel>
+                <FormControl>
+                  <Textarea disabled={isLoading} rows={7} className="bg-background resize-none" placeholder={SEED_CHAT} {...field} />
+                </FormControl>
+                <FormDescription>
+                  Write couple of examples of a human chatting with your AI character, write expected answers.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="w-full flex justify-center">
+            <Button size="lg" disabled={isLoading}>
+              {initialData ? "Edit your companion" : "Create your companion"}
+              <Wand2 className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
         </form>
       </Form>
     </div>
-  )
-}
+   );
+};
 
 export default CharacterForm;
