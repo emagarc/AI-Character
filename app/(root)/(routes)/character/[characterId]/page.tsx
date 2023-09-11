@@ -14,7 +14,7 @@ const CharacterIdPage = async ({
     
     // TODO: Check Subscription
 
-    const character = prismadb.character.findUnique({
+    const character = await prismadb.character.findUnique({
         where: {
             id: params.characterId,
         }
@@ -23,10 +23,12 @@ const CharacterIdPage = async ({
     const categories = await prismadb.category.findMany();
 
   return (
-    <CharacterForm 
-        initialData={character}
-        categories={categories}
-    />
+    <div>
+        <CharacterForm 
+            initialData={character}
+            categories={categories}
+        />
+    </div>
   )
 }
 

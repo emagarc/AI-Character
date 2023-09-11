@@ -38,7 +38,7 @@ const formSchema = z.object({
     message: "Name is required.",
   }),
   description: z.string().min(1, {
-    message: "Description is required.",
+    message: "Description is required.",  
   }),
   instructions: z.string().min(200, {
     message: "Instructions require at least 200 characters."
@@ -82,6 +82,7 @@ export const CharacterForm = ({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      console.log("Entrando a onSubmit")
       if (initialData) {
         await axios.patch(`/api/character/${initialData.id}`, values);
       } else {
