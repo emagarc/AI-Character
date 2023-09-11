@@ -3,11 +3,18 @@ import { NextResponse } from "next/server";
 
 import prismadb from "@/lib/prismadb";
 
-export async function POST(req: Request) {
+export async function PATCH(
+    req: Request,
+    { params }: { params: { characterId: string }}
+    ) {
     try {
         const body = await req.json();
         const user = await currentUser();
         const { src, name, description, instructions, seed, categoryId } = body;
+
+        if (!params.characterId) {
+            return new NextResponse("Character ID is required", { status: 400 });
+        }
 
         if (!user || !user.id || !user.firstName) {
             return new NextResponse("Unauthorized", { status: 401 });
@@ -19,7 +26,10 @@ export async function POST(req: Request) {
 
         // TODO: Check for subscription
 
-        const character = await prismadb.character.create({
+        const character = await prismadb.character.update({
+            where: {
+                id: params.characterId,
+            },
             data: {
                 categoryId,
                 userId: user.id,
@@ -36,7 +46,7 @@ export async function POST(req: Request) {
         console.log(character)
 
     } catch (error) {
-        console.log("[CHARACTER_POST]", error);
+        console.log("[CHARACTER_PATCH]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
