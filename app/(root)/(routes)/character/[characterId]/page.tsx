@@ -1,4 +1,6 @@
 import prismadb from "@/lib/prismadb";
+import { auth, redirectToSignIn } from "@clerk/nextjs";
+
 
 import CharacterForm from "./components/CharacterForm";
 
@@ -11,12 +13,18 @@ interface CharacterIdPageProps {
 const CharacterIdPage = async ({
     params
 }: CharacterIdPageProps) => {
+    const { userId } = auth();
     
     // TODO: Check Subscription
+
+    if (!userId) {
+        return redirectToSignIn();
+    }
 
     const character = await prismadb.character.findUnique({
         where: {
             id: params.characterId,
+            userId
         }
     });
 
