@@ -112,4 +112,4 @@ export class MemoryManager {
       counter += 1;
     }
   }
-}
+};
