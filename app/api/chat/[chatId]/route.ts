@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import { StreamingTextResponse, LangChainStream } from "ai";
-import { auth, currentUser } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs";
 import { Replicate } from "langchain/llms/replicate";
 import { CallbackManager } from "langchain/callbacks";
 import { NextResponse } from "next/server";
@@ -57,12 +57,15 @@ export async function POST(
       userId: user.id,
       modelName: "llama2-13b",
     };
+    
     const memoryManager = await MemoryManager.getInstance();
 
     const records = await memoryManager.readLatestHistory(characterKey);
+
     if (records.length === 0) {
       await memoryManager.seedChatHistory(character.seed, "\n\n", characterKey);
     }
+
     await memoryManager.writeToHistory("User: " + prompt + "\n", characterKey);
 
     // Query Pinecone
@@ -82,7 +85,9 @@ export async function POST(
       relevantHistory = similarDocs.map((doc) => doc.pageContent).join("\n");
     }
     const { handlers } = LangChainStream();
+
     // Call Replicate for inference
+
     const model = new Replicate({
       model:
         "a16z-infra/llama-2-13b-chat:df7690f1994d94e96ad9d568eac121aecf50684a0b0963b25a41cc40061269e5",
@@ -94,6 +99,7 @@ export async function POST(
     });
 
     // Turn verbose on for debugging
+
     model.verbose = true;
 
     const resp = String(
@@ -118,8 +124,8 @@ export async function POST(
     const response = chunks[0];
 
     await memoryManager.writeToHistory("" + response.trim(), characterKey);
+    
     var Readable = require("stream").Readable;
-
     let s = new Readable();
     s.push(response);
     s.push(null);
