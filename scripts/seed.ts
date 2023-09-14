@@ -13,6 +13,7 @@ async function main() {
                 { name: "Horror" },
                 { name: "Realism" },
                 { name: "Science" },
+                { name: "Philosophy" },
                 { name: "Humor" },
                 { name: "Historical" },
                 { name: "Drama" },
